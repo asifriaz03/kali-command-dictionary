@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- i forgot viewport for a bit but then added it lol -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kali Linux Commands - My Dictionary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* reset some stuff */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            /* tried to make it look like a terminal */
+            background-image: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 65, 0.02) 0px,
+                rgba(0, 255, 65, 0.02) 1px,
+                transparent 1px,
+                transparent 4px
+            );
+        }
+
+        /* header */
+        .header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            border-bottom: 1px solid #00ff4133;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff4166;
+            letter-spacing: 4px;
+            /* animation i found on stack overflow */
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 95%, 100% { opacity: 1; }
+            96% { opacity: 0.4; }
+            97% { opacity: 1; }
+            98% { opacity: 0.2; }
+            99% { opacity: 1; }
+        }
+
+        .header p {
+            color: #00ff4199;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+
+        /* this is the blinking cursor thing */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.1em;
+            background: #00ff41;
+            vertical-align: text-bottom;
+            animation: blink 1s steps(1) infinite;
+            margin-left: 3px;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* search area */
+        .search-container {
+            max-width: 750px;
+            margin: 40px auto 20px;
+            padding: 0 20px;
+        }
+
+        .search-box-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            background: #0d1a0d;
+            box-shadow: 0 0 15px #00ff4122, inset 0 0 20px #00ff410a;
+            overflow: hidden;
+        }
+
+        .prompt-label {
+            padding: 12px 14px;
+            color: #00ff41;
+            font-size: 1rem;
+            user-select: none;
+            border-right: 1px solid #00ff4133;
+            white-space: nowrap;
+        }
+
+        #searchInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            padding: 12px 14px;
+            caret-color: #00ff41;
+        }
+
+        #searchInput::placeholder {
+            color: #00ff4144;
+        }
+
+        /* i added a clear button later */
+        #clearBtn {
+            background: transparent;
+            border: none;
+            color: #00ff4166;
+            cursor: pointer;
+            padding: 12px 14px;
+            font-size: 1rem;
+            font-family: 'Share Tech Mono', monospace;
+            transition: color 0.2s;
+        }
+
+        #clearBtn:hover {
+            color: #ff4444;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid #00ff4144;
+            color: #00ff4199;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            padding: 5px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #00ff4122;
+            border-color: #00ff41;
+            color: #00ff41;
+            box-shadow: 0 0 8px #00ff4133;
+        }
+
+        /* result count */
+        .result-meta {
+            max-width: 750px;
+            margin: 10px auto 0;
+            padding: 0 20px;
+            font-size: 0.78rem;
+            color: #00ff4166;
+        }
+
+        /* the main list of commands */
+        .results-container {
+            max-width: 750px;
+            margin: 20px auto 60px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cmd-card {
+            border: 1px solid #00ff4133;
+            border-radius: 4px;
+            background: #0d1a0d;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .cmd-card:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 16px #00ff4122;
+        }
+
+        /* card header clickable */
+        .cmd-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            gap: 12px;
+        }
+
+        .cmd-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: #00ff41;
+            letter-spacing: 1px;
+        }
+
+        .cmd-short {
+            color: #00ff4199;
+            font-size: 0.82rem;
+            flex: 1;
+            /* cut off long text */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cmd-tag {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border: 1px solid;
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+
+        /* color coded tags - i looked up which category each cmd belongs to */
+        .tag-network { color: #00bfff; border-color: #00bfff66; }
+        .tag-recon   { color: #ff9500; border-color: #ff950066; }
+        .tag-exploit { color: #ff4444; border-color: #ff444466; }
+        .tag-file    { color: #c8ff00; border-color: #c8ff0066; }
+        .tag-system  { color: #cc88ff; border-color: #cc88ff66; }
+        .tag-password{ color: #ff69b4; border-color: #ff69b466; }
+        .tag-wireless{ color: #00ffcc; border-color: #00ffcc66; }
+
+        .expand-icon {
+            color: #00ff4166;
+            font-size: 0.9rem;
+            transition: transform 0.25s;
+            flex-shrink: 0;
+        }
+
+        /* expanded body */
+        .cmd-body {
+            display: none;
+            padding: 0 18px 18px;
+            border-top: 1px solid #00ff4122;
+        }
+
+        .cmd-body.open {
+            display: block;
+        }
+
+        .expand-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .section-label {
+            color: #00ff4166;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 14px 0 5px;
+        }
+
+        .cmd-description {
+            color: #ccffcc;
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        /* syntax block */
+        .syntax-block {
+            background: #060f06;
+            border: 1px solid #00ff4133;
+            border-left: 3px solid #00ff41;
+            border-radius: 3px;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            color: #00ff41;
+            margin-top: 4px;
+            overflow-x: auto;
+        }
+
+        /* options table */
+        .options-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
+            font-size: 0.82rem;
+        }
+
+        .options-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #00ff410f;
+            vertical-align: top;
+        }
+
+        .options-table td:first-child {
+            color: #00ff41;
+            white-space: nowrap;
+            width: 120px;
+        }
+
+        .options-table td:last-child {
+            color: #aaffaa;
+        }
+
+        /* example block */
+        .example-block {
+            background: #060f06;
+            border: 1px solid #00ff4122;
+            border-radius: 3px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #88ff88;
+            margin-top: 4px;
+            overflow-x: auto;
+        }
+
+        .example-block span.comment {
+            color: #00ff4155;
+        }
+
+        /* warning box - some commands are dangerous */
+        .warning-box {
+            background: #1a0a00;
+            border: 1px solid #ff950066;
+            border-radius: 3px;
+            padding: 8px 12px;
+            color: #ff9500;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        /* no results */
+        .no-results {
+            text-align: center;
+            color: #00ff4155;
+            padding: 60px 20px;
+            font-size: 0.9rem;
+        }
+
+        .no-results span {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 14px;
+        }
+
+        /* footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #00ff4133;
+            font-size: 0.75rem;
+            border-top: 1px solid #00ff4111;
+        }
+
+        /* scrollbar styling - optional but looks cool */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #00ff4133; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ff4166; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>&gt; KALI LINUX COMMANDS<span class="cursor"></span></h1>
+    <p>// a dictionary of common kali linux / pentesting commands — made for beginners like me</p>
+</div>
+
+<div class="search-container">
+    <div class="search-box-wrapper">
+        <span class="prompt-label">root@kali:~$</span>
+        <input type="text" id="searchInput" placeholder="type a command name or keyword..." autocomplete="off" spellcheck="false">
+        <button id="clearBtn" title="clear">✕</button>
+    </div>
+    <div class="filter-row" id="filterRow">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="network">Network</button>
+        <button class="filter-btn" data-filter="recon">Recon</button>
+        <button class="filter-btn" data-filter="exploit">Exploit</button>
+        <button class="filter-btn" data-filter="file">File</button>
+        <button class="filter-btn" data-filter="system">System</button>
+        <button class="filter-btn" data-filter="password">Password</button>
+        <button class="filter-btn" data-filter="wireless">Wireless</button>
+    </div>
+</div>
+
+<div class="result-meta" id="resultMeta"></div>
+<div class="results-container" id="resultsContainer"></div>
+
+<footer>
+    made by me as a study project — not responsible for misuse, use ethically and on systems u own 🐱
+</footer>
+
+<script>
+    // all the commands data - i manually wrote most of these
+    // TODO: add more commands later
+    const commands = [
+        {
+            name: "nmap",
+            short: "Network scanner / port scanner",
+            tag: "network",
+            description: "nmap (Network Mapper) is one of the most popular and useful tools in kali. it is used to scan networks and discover hosts, open ports, services and OS information. basically lets you see whats running on a network.",
+            syntax: "nmap [options] [target IP or range]",
+            options: [
+                ["-sS", "SYN scan (stealth scan, most common)"],
+                ["-sV", "detect service version on open ports"],
+                ["-O", "try to detect operating system"],
+                ["-p [ports]", "scan specific ports e.g. -p 80,443 or -p 1-1000"],
+                ["-A", "aggressive scan (OS detect + version + scripts)"],
+                ["-T4", "faster scan timing (0=slowest, 5=fastest)"],
+                ["--script", "run nse scripts e.g. --script vuln"],
+                ["-oN file", "save output to a file"],
+            ],
+            example: `nmap -sV -T4 192.168.1.1\n<span class="comment"># scan a range of IPs</span>\nnmap -sS 192.168.1.0/24`,
+            warning: null
+        },
+        {
+            name: "metasploit / msfconsole",
+            short: "Exploitation framework",
+            tag: "exploit",
+            description: "Metasploit is a very powerful exploitation framework used in penetration testing. you launch it by typing msfconsole in terminal. it has hundreds of exploits, payloads and auxiliary modules. this is probably the most famous hacking tool out there. takes time to learn but super useful.",
+            syntax: "msfconsole",
+            options: [
+                ["search [keyword]", "search for a module or exploit"],
+                ["use [module]", "select a module to use"],
+                ["show options", "show required options for selected module"],
+                ["set [option] [value]", "set an option value e.g. set RHOSTS 10.0.0.1"],
+                ["run / exploit", "execute the selected module"],
+                ["sessions", "list active sessions"],
+                ["background", "background the current session"],
+            ],
+            example: `msfconsole\nmsf6 > search eternalblue\nmsf6 > use exploit/windows/smb/ms17_010_eternalblue\nmsf6 exploit(...) > set RHOSTS 192.168.1.5\nmsf6 exploit(...) > run`,
+            warning: "⚠ Only use on systems you have written permission to test. Unauthorized use is illegal."
+        },
+        {
+            name: "netcat (nc)",
+            short: "TCP/UDP networking utility — 'Swiss army knife'",
+            tag: "network",
+            description: "netcat is called the 'swiss army knife of networking'. it can read and write data across network connections. used for port scanning, banner grabbing, file transfer and setting up reverse shells. very simple but very powerful.",
+            syntax: "nc [options] [host] [port]",
+            options: [
+                ["-l", "listen mode (wait for incoming connection)"],
+                ["-v", "verbose output"],
+                ["-p [port]", "local port to use"],
+                ["-e [program]", "execute a program after connect (for shells)"],
+                ["-u", "use UDP instead of TCP"],
+                ["-z", "scan mode, dont send data (port scan)"],
+            ],
+            example: `<span class="comment"># listen on port 4444</span>\nnc -lvp 4444\n<span class="comment"># connect to a host</span>\nnc 192.168.1.10 4444\n<span class="comment"># simple port scan</span>\nnc -zv 192.168.1.1 20-100`,
+            warning: null
+        },
+        {
+            name: "hydra",
+            short: "Brute force login cracker",
+            tag: "password",
+            description: "hydra is a fast and flexible online password cracking tool. it supports many protocols like SSH, FTP, HTTP, RDP, and more. you give it a wordlist and it tries every password until it finds the right one. works well with rockyou.txt wordlist.",
+            syntax: "hydra [options] [target] [service]",
+            options: [
+                ["-l [user]", "single username to try"],
+                ["-L [file]", "file with list of usernames"],
+                ["-p [pass]", "single password to try"],
+                ["-P [file]", "file with list of passwords (wordlist)"],
+                ["-t [n]", "number of parallel tasks (default 16)"],
+                ["-vV", "verbose output, show each attempt"],
+                ["-f", "stop after finding first valid login"],
+            ],
+            example: `hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.5\n<span class="comment"># brute force a web form</span>\nhydra -l admin -P rockyou.txt 192.168.1.1 http-post-form "/login:user=^USER^&pass=^PASS^:Invalid"`,
+            warning: "⚠ Only use on accounts and systems you own or have explicit permission to test."
+        },
+        {
+            name: "john (John the Ripper)",
+            short: "Offline password hash cracker",
+            tag: "password",
+            description: "John the Ripper is used to crack password hashes offline. you give it a file with hashed passwords (like from /etc/shadow) and it tries to crack them using wordlists or brute force. very useful after you got a hash dump from a target system.",
+            syntax: "john [options] [hash file]",
+            options: [
+                ["--wordlist=[file]", "use a wordlist file"],
+                ["--format=[type]", "specify hash format e.g. --format=md5"],
+                ["--show", "show already cracked passwords"],
+                ["--rules", "apply mangling rules to wordlist"],
+                ["--incremental", "brute force mode"],
+            ],
+            example: `<span class="comment"># crack with rockyou wordlist</span>\njohn --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt\n<span class="comment"># show cracked passwords</span>\njohn --show hashes.txt`,
+            warning: null
+        },
+        {
+            name: "aircrack-ng",
+            short: "Wifi / WPA2 password cracker",
+            tag: "wireless",
+            description: "aircrack-ng is a complete suite for auditing wireless networks. it can capture packets, deauthenticate clients, and crack WEP/WPA2 passwords using a captured handshake and a wordlist. requires a wireless adapter that supports monitor mode.",
+            syntax: "aircrack-ng [options] [capture file]",
+            options: [
+                ["-w [wordlist]", "wordlist to use for cracking"],
+                ["-b [BSSID]", "target access point MAC address"],
+                ["-e [ESSID]", "target network name"],
+            ],
+            example: `<span class="comment"># full workflow:</span>\n<span class="comment"># 1. put card in monitor mode</span>\nairmon-ng start wlan0\n<span class="comment"># 2. capture traffic</span>\nairodump-ng wlan0mon\n<span class="comment"># 3. target specific network + capture handshake</span>\nairodump-ng -c 6 --bssid AA:BB:CC:DD:EE:FF -w capture wlan0mon\n<span class="comment"># 4. crack the handshake</span>\naircrack-ng -w /usr/share/wordlists/rockyou.txt capture-01.cap`,
+            warning: "⚠ Only use on your own WiFi network. Accessing others networks without permission is a crime."
+        },
+        {
+            name: "gobuster",
+            short: "Directory & DNS brute forcer",
+            tag: "recon",
+            description: "gobuster is a tool for brute forcing URIs (directories and files) on web servers and DNS subdomains. really useful in web pentesting to find hidden pages and admin panels. faster than some other tools because its written in Go.",
+            syntax: "gobuster [mode] -u [url] -w [wordlist]",
+            options: [
+                ["dir", "directory/file brute force mode"],
+                ["dns", "DNS subdomain brute force mode"],
+                ["-u [url]", "target URL"],
+                ["-w [wordlist]", "wordlist to use"],
+                ["-t [n]", "number of threads (default 10)"],
+                ["-x [ext]", "file extensions to search e.g. -x php,html"],
+                ["-o [file]", "save output to file"],
+            ],
+            example: `gobuster dir -u http://10.10.10.10 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt\n<span class="comment"># with file extensions</span>\ngobuster dir -u http://10.10.10.10 -w wordlist.txt -x php,txt,html`,
+            warning: null
+        },
+        {
+            name: "sqlmap",
+            short: "Automatic SQL injection detection and exploitation",
+            tag: "exploit",
+            description: "sqlmap is an automated tool for detecting and exploiting SQL injection vulnerabilities in web applications. you give it a URL with a parameter and it tests it for SQLi and can even dump the entire database if vulnerable. be careful with this one it sends a LOT of requests.",
+            syntax: "sqlmap -u [url] [options]",
+            options: [
+                ["-u [url]", "target URL with parameter e.g. http://site.com/page?id=1"],
+                ["--dbs", "enumerate all databases"],
+                ["-D [db]", "select a specific database"],
+                ["--tables", "list tables in the database"],
+                ["-T [table]", "select a specific table"],
+                ["--dump", "dump table contents"],
+                ["--level [1-5]", "depth of testing (higher = more tests)"],
+                ["--risk [1-3]", "risk of tests (higher can modify data)"],
+                ["--cookie", "include cookies for auth sessions"],
+            ],
+            example: `<span class="comment"># basic test</span>\nsqlmap -u "http://10.10.10.10/page.php?id=1"\n<span class="comment"># dump databases</span>\nsqlmap -u "http://10.10.10.10/page.php?id=1" --dbs`,
+            warning: "⚠ Don't run sqlmap against websites you don't own. It can cause disruption to live services."
+        },
+        {
+            name: "wireshark",
+            short: "GUI network packet analyzer",
+            tag: "network",
+            description: "wireshark is a graphical packet capture and analysis tool. it captures live network traffic and lets you filter and inspect each packet. really useful for understanding network protocols and finding credentials sent in plaintext. you can also open .pcap files from other tools.",
+            syntax: "wireshark &   (launches the GUI)",
+            options: [
+                ["Display Filter: ip.addr==x.x.x.x", "filter by IP address"],
+                ["Display Filter: tcp.port==80", "filter by port"],
+                ["Display Filter: http", "show only HTTP traffic"],
+                ["Display Filter: ftp", "show FTP traffic (creds often plaintext)"],
+                ["-i [interface]", "capture on specific interface (CLI mode)"],
+                ["-w [file]", "write capture to file"],
+            ],
+            example: `<span class="comment"># launch GUI</span>\nwireshark\n<span class="comment"># or capture from terminal</span>\ntshark -i eth0 -w output.pcap`,
+            warning: null
+        },
+        {
+            name: "burpsuite",
+            short: "Web application security testing proxy",
+            tag: "exploit",
+            description: "Burp Suite is a web application security testing platform. the free community edition is included in kali. it works as a proxy between your browser and the web server so you can intercept, inspect and modify HTTP requests. essential for web pentesting. has tools like repeater, intruder, and scanner (pro only).",
+            syntax: "burpsuite   (launches GUI)",
+            options: [
+                ["Proxy > Intercept", "intercept and modify requests"],
+                ["Repeater", "manually send and modify requests"],
+                ["Intruder", "automated attack tool (fuzzing, brute force)"],
+                ["Decoder", "encode/decode data (base64, URL, etc)"],
+                ["Scanner (pro)", "automated vulnerability scanner"],
+            ],
+            example: `<span class="comment"># launch from terminal</span>\nburpsuite\n\n<span class="comment"># then configure your browser to use proxy:</span>\n<span class="comment"># host: 127.0.0.1  port: 8080</span>`,
+            warning: null
+        },
+        {
+            name: "nikto",
+            short: "Web server vulnerability scanner",
+            tag: "recon",
+            description: "nikto is an open source web server scanner that tests for dangerous files, outdated server software, and other problems. it is noisy (not stealthy at all) but very easy to use. good for quick automated checks on web servers.",
+            syntax: "nikto -h [target]",
+            options: [
+                ["-h [host]", "target host or IP"],
+                ["-p [port]", "target port (default 80)"],
+                ["-ssl", "use HTTPS/SSL"],
+                ["-o [file]", "output results to file"],
+                ["-Format [type]", "output format: txt, html, csv"],
+                ["-Tuning [x]", "scan type tuning (see nikto docs)"],
+            ],
+            example: `nikto -h http://192.168.1.10\n<span class="comment"># scan HTTPS</span>\nnikto -h 192.168.1.10 -ssl -p 443`,
+            warning: null
+        },
+        {
+            name: "hashcat",
+            short: "GPU-accelerated offline hash cracker",
+            tag: "password",
+            description: "hashcat is the fastest password cracker available. it uses your GPU which makes it way faster than CPU-based crackers like john. supports hundreds of hash types. you need to know the hash type first (-m option). common ones: 0=MD5, 100=SHA1, 1000=NTLM, 1800=SHA512crypt.",
+            syntax: "hashcat -m [hashtype] -a [attackmode] [hashfile] [wordlist]",
+            options: [
+                ["-m [n]", "hash type number (e.g. 0 for MD5, 1000 for NTLM)"],
+                ["-a 0", "dictionary attack mode"],
+                ["-a 3", "brute force mask attack"],
+                ["-r [rules]", "apply rules file"],
+                ["--show", "show cracked passwords"],
+                ["-o [file]", "save cracked passwords to file"],
+            ],
+            example: `<span class="comment"># dictionary attack on MD5 hashes</span>\nhashcat -m 0 -a 0 hashes.txt /usr/share/wordlists/rockyou.txt\n<span class="comment"># show cracked results</span>\nhashcat -m 0 hashes.txt --show`,
+            warning: null
+        },
+        {
+            name: "ping",
+            short: "Check if a host is alive / reachable",
+            tag: "network",
+            description: "ping sends ICMP echo request packets to a host to see if its up and measure response time. very basic but one of the first things you do to check if a target is online. some firewalls block ICMP so no response doesnt always mean its down.",
+            syntax: "ping [options] [host or IP]",
+            options: [
+                ["-c [n]", "stop after sending n packets"],
+                ["-i [sec]", "interval between packets"],
+                ["-t [ttl]", "set time to live"],
+                ["-s [size]", "packet size in bytes"],
+            ],
+            example: `ping 192.168.1.1\n<span class="comment"># send only 4 packets</span>\nping -c 4 google.com`,
+            warning: null
+        },
+        {
+            name: "ssh",
+            short: "Secure Shell — remote login",
+            tag: "system",
+            description: "SSH lets you remotely connect to another machine over an encrypted connection. in kali you use it a lot to connect to target boxes or to set up tunnels. default port is 22. if you got credentials for a target machine you can SSH into it.",
+            syntax: "ssh [user]@[host] [-p port]",
+            options: [
+                ["-p [port]", "specify port if not default 22"],
+                ["-i [keyfile]", "use private key file for auth"],
+                ["-L [local:remote]", "local port forwarding"],
+                ["-R [remote:local]", "remote port forwarding"],
+                ["-D [port]", "dynamic SOCKS proxy"],
+                ["-N", "dont execute remote command (tunneling)"],
+            ],
+            example: `ssh user@192.168.1.10\n<span class="comment"># on different port</span>\nssh user@192.168.1.10 -p 2222\n<span class="comment"># with private key</span>\nssh -i id_rsa user@192.168.1.10`,
+            warning: null
+        },
+        {
+            name: "whoami / id",
+            short: "Show current user and group info",
+            tag: "system",
+            description: "whoami just prints your current username. id gives more info including your UID, GID and all groups youre in. these are really useful after getting a shell on a target to know who you are and what privileges you have. if you see uid=0(root) you have root access!",
+            syntax: "whoami\nid",
+            options: [],
+            example: `whoami\n<span class="comment"># output: root (or some other user)</span>\nid\n<span class="comment"># output: uid=0(root) gid=0(root) groups=0(root)</span>`,
+            warning: null
+        },
+        {
+            name: "find",
+            short: "Search for files and directories",
+            tag: "file",
+            description: "find is used to search for files and directories based on many conditions like name, size, permissions, modification time, etc. in pentesting you use it to find SUID binaries (for privilege escalation), config files with passwords, writable directories and more.",
+            syntax: "find [path] [options] [expression]",
+            options: [
+                ["-name [pattern]", "search by file name"],
+                ["-type f", "only files (d for directories)"],
+                ["-perm [mode]", "search by permissions e.g. -perm -4000 for SUID"],
+                ["-user [user]", "files owned by a user"],
+                ["-size [n]", "search by size e.g. +1M for over 1 megabyte"],
+                ["-mtime [n]", "files modified n days ago"],
+                ["-exec [cmd] {} \\;", "run a command on each found file"],
+            ],
+            example: `<span class="comment"># find SUID binaries (useful for privesc)</span>\nfind / -perm -4000 -type f 2>/dev/null\n<span class="comment"># find all .txt files in current directory</span>\nfind . -name "*.txt"\n<span class="comment"># find world-writable files</span>\nfind / -perm -o+w -type f 2>/dev/null`,
+            warning: null
+        },
+        {
+            name: "chmod",
+            short: "Change file permissions",
+            tag: "file",
+            description: "chmod changes the read/write/execute permissions of a file. permissions are represented as numbers (octal) or letters (rwx). understanding permissions is important in pentesting especially for privilege escalation. 777 = full permissions for everyone which is bad security.",
+            syntax: "chmod [permissions] [file]",
+            options: [
+                ["777", "everyone can read write execute"],
+                ["755", "owner can rwx, others can rx"],
+                ["644", "owner can rw, others can r only"],
+                ["+x", "add execute permission"],
+                ["-x", "remove execute permission"],
+                ["-R", "recursive (apply to all files in directory)"],
+            ],
+            example: `<span class="comment"># make a script executable</span>\nchmod +x myscript.sh\n<span class="comment"># set specific permissions with numbers</span>\nchmod 644 file.txt\n<span class="comment"># give everyone full access (not recommended)</span>\nchmod 777 file.txt`,
+            warning: null
+        },
+        {
+            name: "cat / less / more",
+            short: "Display file contents",
+            tag: "file",
+            description: "cat prints a whole file to terminal. less and more let you scroll through a file page by page (less is better because you can scroll backwards). these are basic but you use them ALL the time. cat is also used to read /etc/passwd, config files, flag files in CTFs etc.",
+            syntax: "cat [file]\nless [file]\nmore [file]",
+            options: [
+                ["-n", "show line numbers (cat)"],
+                ["-A", "show all characters including hidden ones (cat)"],
+            ],
+            example: `cat /etc/passwd\ncat /etc/shadow\n<span class="comment"># combine files</span>\ncat file1.txt file2.txt > combined.txt\n<span class="comment"># scroll through big files</span>\nless /var/log/syslog`,
+            warning: null
+        },
+        {
+            name: "grep",
+            short: "Search text using patterns",
+            tag: "file",
+            description: "grep is used to search text. you can search inside files or pipe output from another command into grep to filter it. extremely useful. in pentesting you use it to search for passwords in files, filter nmap output, find specific strings in code etc.",
+            syntax: "grep [options] [pattern] [file]",
+            options: [
+                ["-i", "case insensitive search"],
+                ["-r", "recursive search in directories"],
+                ["-n", "show line numbers"],
+                ["-v", "invert match (show lines that dont match)"],
+                ["-l", "only show filenames that match"],
+                ["-c", "count number of matches"],
+                ["--color", "highlight matched text"],
+            ],
+            example: `<span class="comment"># search for 'password' in a file</span>\ngrep -i "password" config.txt\n<span class="comment"># search recursively in directory</span>\ngrep -r "secret" /var/www/\n<span class="comment"># pipe output</span>\nnmap 192.168.1.0/24 | grep "open"`,
+            warning: null
+        },
+        {
+            name: "ps / top / htop",
+            short: "View running processes",
+            tag: "system",
+            description: "ps shows a snapshot of current processes. top shows real-time process info like CPU and memory. htop is like top but nicer looking with colors (you might need to install it). in pentesting you look at processes to find interesting services, find what the user is running, or find processes running as root.",
+            syntax: "ps [options]\ntop\nhtop",
+            options: [
+                ["ps aux", "show all processes from all users with full info"],
+                ["ps -ef", "another common way to show all processes"],
+                ["-u [user]", "show processes for specific user"],
+            ],
+            example: `ps aux\n<span class="comment"># see all processes and grep for something specific</span>\nps aux | grep apache\n<span class="comment"># real time view</span>\ntop`,
+            warning: null
+        },
+        {
+            name: "ifconfig / ip a",
+            short: "Show network interfaces and IP addresses",
+            tag: "network",
+            description: "ifconfig shows your network interfaces and their IP addresses. in newer linux versions ip a (or ip addr) is preferred but ifconfig still works in kali. you need to know your own IP address to do a lot of pentesting tasks like setting up listeners.",
+            syntax: "ifconfig\nip a\nip addr show",
+            options: [
+                ["ifconfig eth0", "show specific interface"],
+                ["ifconfig eth0 up/down", "enable or disable interface"],
+                ["ip a", "modern replacement for ifconfig"],
+            ],
+            example: `ifconfig\n<span class="comment"># or newer way</span>\nip a\n<span class="comment"># see just your IP on eth0</span>\nip addr show eth0`,
+            warning: null
+        },
+        {
+            name: "curl / wget",
+            short: "Download files / make HTTP requests",
+            tag: "network",
+            description: "curl makes HTTP requests and shows the response. wget downloads files from the internet. both are super useful. curl is good for testing web APIs, grabbing pages, sending POST requests etc. wget is better for downloading files. in CTFs you often transfer files between machines using these.",
+            syntax: "curl [options] [url]\nwget [options] [url]",
+            options: [
+                ["-o [file]", "save output to file (curl)"],
+                ["-X POST", "make a POST request (curl)"],
+                ["-d [data]", "send data with request (curl)"],
+                ["-H [header]", "add custom header (curl)"],
+                ["-b [cookies]", "send cookies (curl)"],
+                ["-O", "save file with original name (wget)"],
+                ["-r", "download recursively (wget)"],
+            ],
+            example: `<span class="comment"># basic GET request</span>\ncurl http://192.168.1.10\n<span class="comment"># download a file</span>\nwget http://192.168.1.10/shell.php\n<span class="comment"># POST request with data</span>\ncurl -X POST -d "user=admin&pass=1234" http://site.com/login`,
+            warning: null
+        },
+        {
+            name: "uname",
+            short: "Print system/kernel information",
+            tag: "system",
+            description: "uname prints information about the system. really useful after getting a shell on a target to figure out what OS and kernel version theyre running. knowing the kernel version helps you search for kernel exploits for privilege escalation.",
+            syntax: "uname [options]",
+            options: [
+                ["-a", "print all information (most useful)"],
+                ["-r", "kernel release version only"],
+                ["-s", "kernel name"],
+                ["-m", "machine hardware (e.g. x86_64)"],
+            ],
+            example: `uname -a\n<span class="comment"># typical output:</span>\n<span class="comment"># Linux kali 6.1.0-kali9-amd64 #1 SMP PREEMPT_DYNAMIC ... x86_64 GNU/Linux</span>`,
+            warning: null
+        },
+    ];
+
+    // --- state ---
+    let activeFilter = "all";
+    let searchQuery = "";
+
+    // --- get elements ---
+    const searchInput = document.getElementById("searchInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const resultsContainer = document.getElementById("resultsContainer");
+    const resultMeta = document.getElementById("resultMeta");
+
+    // filter buttons
+    document.getElementById("filterRow").addEventListener("click", function(e) {
+        if (e.target.classList.contains("filter-btn")) {
+            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
+            activeFilter = e.target.dataset.filter;
+            render();
+        }
+    });
+
+    searchInput.addEventListener("input", function() {
+        searchQuery = this.value.trim().toLowerCase();
+        render();
+    });
+
+    clearBtn.addEventListener("click", function() {
+        searchInput.value = "";
+        searchQuery = "";
+        render();
+        searchInput.focus();
+    });
+
+    function getFiltered() {
+        return commands.filter(function(cmd) {
+            // filter by category
+            var catMatch = activeFilter === "all" || cmd.tag === activeFilter;
+            if (!catMatch) return false;
+
+            // filter by search query
+            if (searchQuery === "") return true;
+
+            // search in name, short desc, description, options
+            var haystack = cmd.name.toLowerCase()
+                + " " + cmd.short.toLowerCase()
+                + " " + cmd.description.toLowerCase()
+                + " " + cmd.options.map(o => o[0] + " " + o[1]).join(" ").toLowerCase();
+
+            return haystack.indexOf(searchQuery) !== -1;
+        });
+    }
+
+    function render() {
+        var filtered = getFiltered();
+        resultsContainer.innerHTML = "";
+
+        // update meta text
+        if (searchQuery !== "" || activeFilter !== "all") {
+            resultMeta.textContent = "// showing " + filtered.length + " of " + commands.length + " commands";
+        } else {
+            resultMeta.textContent = "// " + commands.length + " commands total — click a card to expand";
+        }
+
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = '<div class="no-results"><span>?</span>no commands found for "' + escapeHtml(searchQuery) + '"<br>try a different keyword</div>';
+            return;
+        }
+
+        filtered.forEach(function(cmd) {
+            var card = buildCard(cmd);
+            resultsContainer.appendChild(card);
+        });
+    }
+
+    function buildCard(cmd) {
+        var card = document.createElement("div");
+        card.className = "cmd-card";
+
+        // build options rows html
+        var optionsHtml = "";
+        if (cmd.options.length > 0) {
+            optionsHtml = '<p class="section-label">Common Options</p><table class="options-table">';
+            cmd.options.forEach(function(opt) {
+                optionsHtml += "<tr><td>" + escapeHtml(opt[0]) + "</td><td>" + escapeHtml(opt[1]) + "</td></tr>";
+            });
+            optionsHtml += "</table>";
+        }
+
+        // warning html
+        var warningHtml = cmd.warning ? '<div class="warning-box">' + escapeHtml(cmd.warning) + '</div>' : "";
+
+        card.innerHTML = 
+            '<div class="cmd-header">' +
+                '<span class="cmd-name">' + escapeHtml(cmd.name) + '</span>' +
+                '<span class="cmd-short">' + escapeHtml(cmd.short) + '</span>' +
+                '<span class="cmd-tag tag-' + cmd.tag + '">' + cmd.tag + '</span>' +
+                '<span class="expand-icon">▼</span>' +
+            '</div>' +
+            '<div class="cmd-body">' +
+                '<p class="section-label">What it does</p>' +
+                '<p class="cmd-description">' + escapeHtml(cmd.description) + '</p>' +
+                '<p class="section-label">Syntax</p>' +
+                '<div class="syntax-block">' + escapeHtml(cmd.syntax) + '</div>' +
+                optionsHtml +
+                '<p class="section-label">Example</p>' +
+                '<div class="example-block">' + cmd.example + '</div>' +
+                warningHtml +
+            '</div>';
+
+        // toggle on click
+        card.querySelector(".cmd-header").addEventListener("click", function() {
+            var body = card.querySelector(".cmd-body");
+            var icon = card.querySelector(".expand-icon");
+            body.classList.toggle("open");
+            icon.classList.toggle("rotated");
+        });
+
+        return card;
+    }
+
+    // i should probably sanitize input properly but this is a basic helper for now
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    // run on load
+    render();
+
+    // auto focus search
+    searchInput.focus();
+</script>
+
+</body>
+</html>
