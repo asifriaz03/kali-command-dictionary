@@ -779,6 +779,23 @@
             example: `uname -a\n<span class="comment"># typical output:</span>\n<span class="comment"># Linux kali 6.1.0-kali9-amd64 #1 SMP PREEMPT_DYNAMIC ... x86_64 GNU/Linux</span>`,
             warning: null
         },
+        {
+            name: "traceroute",
+            short: "Trace the path packets take to reach a host",
+            tag: "network",
+            description: "traceroute shows you every router/hop that a packet passes through on its way to the destination. its really useful for understanding network topology and finding where traffic is being blocked or slowed down. in windows the same tool is called tracert. in pentesting you use it to map out the network between you and a target.",
+            syntax: "traceroute [options] [host or IP]",
+            options: [
+                ["-m [n]", "set max hops (default is 30)"],
+                ["-n", "show IP addresses instead of hostnames (faster)"],
+                ["-w [sec]", "how long to wait for a response per hop"],
+                ["-q [n]", "number of probe packets per hop (default 3)"],
+                ["-I", "use ICMP instead of UDP"],
+                ["-T", "use TCP SYN for probing (good for firewalls)"],
+            ],
+            example: `traceroute google.com\n<span class="comment"># faster, shows IPs only</span>\ntraceroute -n 192.168.1.1\n<span class="comment"># windows version</span>\ntracert google.com`,
+            warning: null
+        },
     ];
 
     // --- state ---
